@@ -1,0 +1,23 @@
+[project]
+name = "lite6-starter"
+version = "0.1.0"
+description = "Beginner scripts for the UFACTORY Lite 6 arm: hello, teleop (keyboard / gamepad), Rerun telemetry"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.10"
+dependencies = [
+    "xarm-python-sdk>=1.17",
+    "pygame>=2.5",
+    "rerun-sdk>=0.24",
+]
+
+[project.optional-dependencies]
+hid = ["hidapi"]   # only for generic USB pads read with --hid
+dev = ["pytest"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["lite6"]
