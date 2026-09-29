@@ -137,34 +137,28 @@ The full SDK is in [xArm-Python-SDK](https://github.com/xArm-Developer/xArm-Pyth
 
 ## Calibration problem: a joint reads the wrong angle
 
-Each joint has a **zero**: the position where the controller reports 0°. If a zero is wrong, the arm moves fine
-but every position it reports (and every position you ask for) is off. Vision and pick-and-place will miss.
+Each joint has a **zero**: the position where the controller reports 0°. If a zero is wrong, the arm still moves,
+but every angle it reports (and every position you ask for) is off.
 
-**How we noticed.** On our arm, joint 3 (the elbow) read about **40.8° too high**:
+**Check it.** Open **UFactory Studio**, UFACTORY's own web app, in a browser: `http://<arm-ip>:18333`.
+It shows a 3D model of the arm in its current pose. Compare it with the real robot.
+If a joint in the 3D view is bent differently from the real one, that joint's zero is off.
 
-- `07_home.py` put all joints at 0°, but the forearm was clearly not horizontal (a side photo showed it).
-- The tool height from `01_hello.py` said 53 cm; a tape measure said 37 cm.
-- UFactory Studio's 3D view of the arm did not match the real arm.
+**If you need to reset a joint to 0:**
 
-**How we fixed it (re-zeroing joint 3):**
-
-1. Move the arm so joint 3 is at its **true** zero. Here: upper arm vertical (joint 2 = 0°), forearm horizontal.
-   We moved it slowly with the SDK to reported angle = 40.8° (the measured error), then checked it with a photo.
-2. Switch the motors off (`set_state(4)`, then `motion_enable(False)`). The brakes hold the pose.
-3. Open **UFactory Studio**, UFACTORY's own web app, in a browser: `http://<arm-ip>:18333`.
-4. Go to **Settings > General > Debugging Tools** and send the command `D13 I3`.
-   `D13` means "make the current position this joint's zero"; `I3` means joint 3.
-5. Press the **emergency stop**, wait 5 s, release it. This restarts the joints with the new zero.
-6. Check: run `01_hello.py`. Joint 3 now read 0.0° in that pose, and the zero stayed after power-offs.
-
-For another joint, replace the number: `D13 I2` for joint 2, and so on.
+1. Write down every joint angle (`python scripts/01_hello.py`), so you can compare later.
+2. Move the joint to its **true** zero: the pose where Studio's 3D model at 0° matches the real arm.
+   Move it slowly (with `04_teleop_keyboard.py` in joint mode, or the SDK).
+3. Switch the motors off. The brakes hold the pose.
+4. In UFactory Studio, go to **Settings > General > Debugging Tools** and send `D13 I<joint>`,
+   for example `D13 I3` for joint 3. It makes the current position that joint's zero.
+5. Press the **emergency stop**, wait 5 s, release it. The joints restart with the new zero.
+6. Check: run `01_hello.py`. The joint should read about 0°, and Studio's 3D view should match the real arm.
 
 **Warnings:**
 
-- `D13` changes the controller permanently. Write down every joint angle (`01_hello.py`) before you send it.
-- Only re-zero a joint once you have **measured** the error (photo, tape measure, or Studio's 3D view).
-- The wrist joints (4, 5, 6) are harder to check by eye. When we re-zeroed joint 5 (`D13 I5`), the readings of
-  joints 4 and 6 jumped about 20° after the next restart. Re-check every joint after a restart.
+- `D13` changes the controller permanently. Only use it once you are sure the joint is off.
+- After a restart, re-check **every** joint, not only the one you reset.
 - If a zero does not hold across restarts, stop and contact UFACTORY support.
 
 ## License
