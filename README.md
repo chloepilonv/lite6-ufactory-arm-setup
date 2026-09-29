@@ -135,6 +135,38 @@ The full SDK is in [xArm-Python-SDK](https://github.com/xArm-Developer/xArm-Pyth
 | `C1x Servo motor N error` | fault in joint N (the log line below names it) | `02_enable.py`; if it repeats, power-cycle the control box |
 | state `stopped / motors off` | motors were switched off | `02_enable.py` |
 
+## Calibration problem: a joint reads the wrong angle
+
+Each joint has a **zero**: the position where the controller reports 0°. If a zero is wrong, the arm moves fine
+but every position it reports (and every position you ask for) is off. Vision and pick-and-place will miss.
+
+**How we noticed.** On our arm, joint 3 (the elbow) read about **40.8° too high**:
+
+- `07_home.py` put all joints at 0°, but the forearm was clearly not horizontal (a side photo showed it).
+- The tool height from `01_hello.py` said 53 cm; a tape measure said 37 cm.
+- UFactory Studio's 3D view of the arm did not match the real arm.
+
+**How we fixed it (re-zeroing joint 3):**
+
+1. Move the arm so joint 3 is at its **true** zero. Here: upper arm vertical (joint 2 = 0°), forearm horizontal.
+   We moved it slowly with the SDK to reported angle = 40.8° (the measured error), then checked it with a photo.
+2. Switch the motors off (`set_state(4)`, then `motion_enable(False)`). The brakes hold the pose.
+3. Open **UFactory Studio**, UFACTORY's own web app, in a browser: `http://<arm-ip>:18333`.
+4. Go to **Settings > General > Debugging Tools** and send the command `D13 I3`.
+   `D13` means "make the current position this joint's zero"; `I3` means joint 3.
+5. Press the **emergency stop**, wait 5 s, release it. This restarts the joints with the new zero.
+6. Check: run `01_hello.py`. Joint 3 now read 0.0° in that pose, and the zero stayed after power-offs.
+
+For another joint, replace the number: `D13 I2` for joint 2, and so on.
+
+**Warnings:**
+
+- `D13` changes the controller permanently. Write down every joint angle (`01_hello.py`) before you send it.
+- Only re-zero a joint once you have **measured** the error (photo, tape measure, or Studio's 3D view).
+- The wrist joints (4, 5, 6) are harder to check by eye. When we re-zeroed joint 5 (`D13 I5`), the readings of
+  joints 4 and 6 jumped about 20° after the next restart. Re-check every joint after a restart.
+- If a zero does not hold across restarts, stop and contact UFACTORY support.
+
 ## License
 
 MIT
